@@ -123,17 +123,23 @@ export default function FormDesigner({ onSave, initialTemplate }) {
                     className="option-input"
                   />
 
-                  {field.type === 'select' && (
-                    <div>
-                      <label>Options (comma-separated):</label>
-                      <textarea
-                        value={field.options.join(', ')}
-                        onChange={(e) => updateField(field.id, { options: e.target.value.split(',').map(o => o.trim()).filter(o => o) })}
-                        className="option-input"
-                        rows="3"
-                      />
-                    </div>
-                  )}
+                 <textarea
+                  value={field.options.join(', ')}
+                  onChange={(e) => {
+                  const value = e.target.value;
+
+                  const options = value
+                  .split(',')
+                  .map(o => o.trim());
+
+                 updateField(field.id, {
+                 options: options.length ? options : ['']
+               });
+               }}
+                  className="option-input"
+                rows="3"
+                />
+
 
                   <div className="field-controls">
                     {index > 0 && (
