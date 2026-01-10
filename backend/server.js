@@ -18,10 +18,10 @@ mongoose.connect(process.env.MONGODB_URI)
   .catch(err => console.error('❌ MongoDB error:', err));
 
 // Use the routes
-app.use('/api/templates', templatesRouter);
-app.use('/api/submissions', submissionsRouter);
+app.use('/templates', templatesRouter);
+app.use('/submissions', submissionsRouter);
 
-app.get('/api/health', (req, res) => {
+app.get('/', (req, res) => {
   res.json({ status: 'Server is running!' });
 });
 
