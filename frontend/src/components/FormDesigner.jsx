@@ -14,7 +14,9 @@ export default function FormDesigner({ onSave, initialTemplate }) {
       type,
       required: false,
       placeholder: '',
-      options: type === 'select' ? ['Option 1', 'Option 2'] : [],
+      options: type === 'select' ? [''] : [],
+      min: undefined,
+      max: undefined,
       order: fields.length
     };
     setFields([...fields, newField]);
@@ -22,7 +24,7 @@ export default function FormDesigner({ onSave, initialTemplate }) {
   };
 
   const updateField = (fieldId, updates) => {
-    setFields(fields.map(f => 
+    setFields(fields.map(f =>
       f.id === fieldId ? { ...f, ...updates } : f
     ));
   };
@@ -33,14 +35,18 @@ export default function FormDesigner({ onSave, initialTemplate }) {
   };
 
   const moveFieldUp = (index) => {
+    if (index === 0) return;
     const newFields = [...fields];
-    [newFields[index], newFields[index - 1]] = [newFields[index - 1], newFields[index]];
+    [newFields[index - 1], newFields[index]] =
+      [newFields[index], newFields[index - 1]];
     setFields(newFields);
   };
 
   const moveFieldDown = (index) => {
+    if (index === fields.length - 1) return;
     const newFields = [...fields];
-    [newFields[index], newFields[index + 1]] = [newFields[index + 1], newFields[index]];
+    [newFields[index + 1], newFields[index]] =
+      [newFields[index], newFields[index + 1]];
     setFields(newFields);
   };
 
@@ -53,12 +59,25 @@ export default function FormDesigner({ onSave, initialTemplate }) {
       alert('Please add at least one field');
       return;
     }
-    onSave({ title, description, fields });
+
+    // Clean select options before saving
+    const cleanedFields = fields.map(field => {
+      if (field.type === 'select') {
+        return {
+          ...field,
+          options: field.options.filter(o => o.trim() !== '')
+        };
+      }
+      return field;
+    });
+
+    onSave({ title, description, fields: cleanedFields });
   };
 
   return (
     <div className="designer">
       <h2>Create New Form</h2>
+
       <input
         type="text"
         placeholder="Form Title"
@@ -66,6 +85,7 @@ export default function FormDesigner({ onSave, initialTemplate }) {
         onChange={(e) => setTitle(e.target.value)}
         className="title-input"
       />
+
       <textarea
         placeholder="Form Description"
         value={description}
@@ -87,8 +107,8 @@ export default function FormDesigner({ onSave, initialTemplate }) {
           <p className="no-fields">No fields added yet</p>
         ) : (
           fields.map((field, index) => (
-            <div 
-              key={field.id} 
+            <div
+              key={field.id}
               className={`field-item ${selectedFieldId === field.id ? 'selected' : ''}`}
               onClick={() => setSelectedFieldId(field.id)}
             >
@@ -110,7 +130,9 @@ export default function FormDesigner({ onSave, initialTemplate }) {
                     <input
                       type="checkbox"
                       checked={field.required}
-                      onChange={(e) => updateField(field.id, { required: e.target.checked })}
+                      onChange={(e) =>
+                        updateField(field.id, { required: e.target.checked })
+                      }
                     />
                     Required
                   </label>
@@ -119,40 +141,87 @@ export default function FormDesigner({ onSave, initialTemplate }) {
                     type="text"
                     placeholder="Placeholder text"
                     value={field.placeholder}
-                    onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
+                    onChange={(e) =>
+                      updateField(field.id, { placeholder: e.target.value })
+                    }
                     className="option-input"
                   />
 
-                 <textarea
-                  value={field.options.join(', ')}
-                  onChange={(e) => {
-                  const value = e.target.value;
+                  {/* SELECT OPTIONS */}
+                  {field.type === 'select' && (
+                    <textarea
+                      value={field.options.join(', ')}
+                      onChange={(e) => {
+                        const options = e.target.value
+                          .split(',')
+                          .map(o => o.trim());
 
-                  const options = value
-                  .split(',')
-                  .map(o => o.trim());
+                        updateField(field.id, {
+                          options: options.length ? options : ['']
+                        });
+                      }}
+                      className="option-input"
+                      rows="3"
+                      placeholder="Enter options separated by commas"
+                    />
+                  )}
 
-                 updateField(field.id, {
-                 options: options.length ? options : ['']
-               });
-               }}
-                  className="option-input"
-                rows="3"
-                />
+                  {/* NUMBER MIN / MAX */}
+                  {field.type === 'number' && (
+                    <div className="number-rules">
+                      <input
+                        type="number"
+                        placeholder="Min value"
+                        value={field.min ?? ''}
+                        onChange={(e) =>
+                          updateField(field.id, {
+                            min: e.target.value === ''
+                              ? undefined
+                              : Number(e.target.value)
+                          })
+                        }
+                        className="option-input"
+                      />
 
+                      <input
+                        type="number"
+                        placeholder="Max value"
+                        value={field.max ?? ''}
+                        onChange={(e) =>
+                          updateField(field.id, {
+                            max: e.target.value === ''
+                              ? undefined
+                              : Number(e.target.value)
+                          })
+                        }
+                        className="option-input"
+                      />
+                    </div>
+                  )}
 
                   <div className="field-controls">
                     {index > 0 && (
-                      <button onClick={() => moveFieldUp(index)} className="btn-control">
+                      <button
+                        onClick={() => moveFieldUp(index)}
+                        className="btn-control"
+                      >
                         ↑ Move Up
                       </button>
                     )}
                     {index < fields.length - 1 && (
-                      <button onClick={() => moveFieldDown(index)} className="btn-control">
+                      <button
+                        onClick={() => moveFieldDown(index)}
+                        className="btn-control"
+                      >
                         ↓ Move Down
                       </button>
                     )}
-                    <button onClick={() => removeField(field.id)} className="remove-btn">Remove</button>
+                    <button
+                      onClick={() => removeField(field.id)}
+                      className="remove-btn"
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
               )}
@@ -161,7 +230,9 @@ export default function FormDesigner({ onSave, initialTemplate }) {
         )}
       </div>
 
-      <button onClick={handleSave} className="save-btn">Save Form</button>
+      <button onClick={handleSave} className="save-btn">
+        Save Form
+      </button>
     </div>
   );
 }

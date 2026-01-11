@@ -11,11 +11,33 @@ export default function FormRenderer({ template, onSubmit }) {
 
   const validate = () => {
     const newErrors = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    // Required check
     for (const field of template.fields) {
+      const value = responses[field.id];
       if (field.required && !responses[field.id]) {
         newErrors[field.id] = `${field.label} is required`;
+        continue;
+      }
+
+        // Email format check
+      if (field.type === 'email' && value) {
+      if (!emailRegex.test(value)) {
+        newErrors[field.id] = 'Invalid email address';
       }
     }
+    // Min / Max validation
+      if (field.type === 'number' && value !== undefined) {
+      if (field.min !== undefined && value < field.min) {
+        newErrors[field.id] = `Minimum value is ${field.min}`;
+      }
+      if (field.max !== undefined && value > field.max) {
+        newErrors[field.id] = `Maximum value is ${field.max}`;
+      }
+    }
+  }
+  
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
